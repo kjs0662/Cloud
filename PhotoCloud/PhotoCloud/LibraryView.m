@@ -13,10 +13,10 @@
 @interface LibraryView()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
 
 @property (nonatomic) PHFetchResult<PHAsset *> *fetchResults;
-@property (nonatomic) NSMutableArray *photos;
-@property (nonatomic) NSMutableArray *selectedPhotos;
+@property (nonatomic) NSMutableArray<PHAsset *> *selectedPhotos;
 @property (nonatomic) PHImageManager *imageManager;
 
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *activityIndicator;
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (weak, nonatomic) IBOutlet UIButton *cancelButton;
 @property (weak, nonatomic) IBOutlet UIButton *uploadButton;
@@ -39,13 +39,6 @@
     self.fetchResults = [PHAsset fetchAssetsWithOptions:fetchOptions];
     self.imageManager = [PHImageManager defaultManager];
     self.selectedPhotos = [[NSMutableArray alloc] init];
-    self.photos = [[NSMutableArray alloc] init];
-    CGFloat targetSize = floorf(self.view.bounds.size.width)/3 - 2;
-    for (PHAsset *asset in self.fetchResults) {
-        [self.imageManager requestImageForAsset:asset targetSize:CGSizeMake(targetSize, targetSize) contentMode:PHImageContentModeAspectFill options:nil resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
-            [self.photos addObject:result];
-        }];
-    }
     
     self.collectionView.backgroundColor = UIColor.systemBackgroundColor;
     self.collectionView.allowsMultipleSelection = YES;
@@ -62,6 +55,7 @@
 }
 
 - (IBAction)uploadButtonWasSelected:(UIButton *)sender {
+    [self.activityIndicator startAnimating];
     NSURL *url = [NSURL URLWithString:@"http://localhost:9090/"];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10];
     [request setHTTPMethod:@"POST"];
@@ -70,13 +64,20 @@
     [request setValue:contentType forHTTPHeaderField: @"Content-Type"];
     NSData *httpBody = [self createBodyWithBoundary:boundary parameters:nil images:self.selectedPhotos];
     
+    __weak LibraryView *weakSelf = self;
     NSURLSessionDataTask *task = [NSURLSession.sharedSession uploadTaskWithRequest:request fromData:httpBody completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         if (error) {
             NSLog(@"error = %@", error);
             return;
         }
         NSString *result = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        NSLog(@"result = %@", result);
+        if ([result isEqualToString:@"success"]) {
+            [weakSelf.delegate libraryViewDelegateDidUploadPhoto:weakSelf];
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.activityIndicator stopAnimating];
+            [self cancelButtonWasSelected:nil];
+        });
     }];
     [task resume];
 }
@@ -95,20 +96,17 @@
     }];
 
     // add image data
+    for (PHAsset *asset in self.selectedPhotos) {
+        [self.imageManager requestImageForAsset:asset targetSize:CGSizeMake(asset.pixelWidth, asset.pixelHeight) contentMode:PHImageContentModeAspectFill options:nil resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
+            NSString *str_image1 = [@(asset.hash) stringValue];
+            NSData *imageData = UIImageJPEGRepresentation(result, 90);
 
-    for (UIImage *image in images) {
-        float low_bound = 0;
-        float high_bound =5000;
-        float rndValue = (((float)arc4random()/0x100000000)*(high_bound-low_bound)+low_bound);
-        int intRndValue = (int)(rndValue + 0.5);
-        NSString *str_image1 = [@(intRndValue) stringValue];
-        NSData *imageData = UIImageJPEGRepresentation(image, 90);
-
-        [httpBody appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-        [httpBody appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"files\"; filename=\"%@.png\"\r\n",str_image1] dataUsingEncoding:NSUTF8StringEncoding]];
-        [httpBody appendData:[@"Content-Type: application/octet-stream\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
-        [httpBody appendData:imageData];
-        [httpBody appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+            [httpBody appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+            [httpBody appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"files\"; filename=\"%@.png\"\r\n",str_image1] dataUsingEncoding:NSUTF8StringEncoding]];
+            [httpBody appendData:[@"Content-Type: application/octet-stream\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+            [httpBody appendData:imageData];
+            [httpBody appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+        }];
     }
 
     [httpBody appendData:[[NSString stringWithFormat:@"--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
@@ -128,7 +126,7 @@
         [self.uploadButton setTintColor:UIColor.systemBlueColor];
         [self.uploadButton setEnabled:YES];
     }
-    [self.selectedPhotos addObject:self.photos[indexPath.item]];
+    [self.selectedPhotos addObject:self.fetchResults[indexPath.item]];
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didDeselectItemAtIndexPath:(NSIndexPath *)indexPath {
@@ -136,7 +134,7 @@
         [self.uploadButton setEnabled:NO];
         [self.uploadButton setTintColor:UIColor.grayColor];
     }
-    [self.selectedPhotos removeObject:self.photos[indexPath.item]];
+    [self.selectedPhotos removeObject:self.fetchResults[indexPath.item]];
 }
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
@@ -149,7 +147,10 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     PhotoCell *cell = [self.collectionView dequeueReusableCellWithReuseIdentifier:@"PhotoCell" forIndexPath:indexPath];
-    cell.imageView.image = self.photos[indexPath.item];
+    CGFloat targetSize = floorf(self.view.bounds.size.width)/3 - 2;
+    [self.imageManager requestImageForAsset:self.fetchResults[indexPath.item] targetSize:CGSizeMake(targetSize, targetSize) contentMode:PHImageContentModeAspectFill options:nil resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
+        cell.imageView.image = result;
+    }];
     
     return cell;
 }

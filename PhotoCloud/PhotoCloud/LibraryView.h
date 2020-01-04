@@ -10,7 +10,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol LibraryViewDelegate;
+
 @interface LibraryView : UIViewController
+
+@property (nonatomic, weak)id<LibraryViewDelegate> delegate;
+
+@end
+
+@protocol LibraryViewDelegate <NSObject>
+
+- (void)libraryViewDelegateDidUploadPhoto:(UIViewController *)vc;
 
 @end
 

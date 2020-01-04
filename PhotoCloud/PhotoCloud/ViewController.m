@@ -10,7 +10,7 @@
 #import "PhotoCell.h"
 #import "LibraryView.h"
 
-@interface ViewController ()<UICollectionViewDelegate, UICollectionViewDataSource>
+@interface ViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, LibraryViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 
@@ -38,13 +38,20 @@
         if (!data || error) {
             return;
         }
+        NSLog(@"HTTP response results : %@", [[NSString alloc] initWithBytes:data.bytes length:data.length encoding:NSUTF8StringEncoding]);
         NSError *err = nil;
-        id jsonObj = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&err];
+        NSDictionary <NSString *, id> *json = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
         if(err) {
             return;
         }
-        NSDictionary <NSString *, id> *json = jsonObj;
-        
+        if (json[@"Images"]) {
+            if ([json[@"Images"] isKindOfClass:NSArray.class]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    self.photos = json[@"Images"];
+                    [self.collectionView reloadData];
+                });
+            }
+        }
     }];
     [task resume];
     
@@ -66,7 +73,28 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     PhotoCell *cell = [self.collectionView dequeueReusableCellWithReuseIdentifier:@"PhotoCell" forIndexPath:indexPath];
+    UIImage *image = [[UIImage alloc] initWithContentsOfFile:self.photos[indexPath.item]];
+    cell.imageView.image = image;
     return cell;
+}
+
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+    CGFloat targetSize = floorf(self.view.bounds.size.width)/3 - 2;
+    return CGSizeMake(targetSize, targetSize);
+}
+
+- (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section {
+    return 1;
+}
+
+- (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section {
+    return 1;
+}
+
+#pragma mark - LibraryViewDelgate
+
+- (void)libraryViewDelegateDidUploadPhoto:(UIViewController *)vc {
+    [self loadData];
 }
 
 

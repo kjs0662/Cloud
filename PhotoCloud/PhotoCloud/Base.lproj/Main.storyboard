@@ -101,6 +101,10 @@
                                     <outlet property="delegate" destination="WUU-4y-eJd" id="aBw-7T-2ON"/>
                                 </connections>
                             </collectionView>
+                            <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="medium" id="JGB-D9-gN3">
+                                <rect key="frame" x="0.0" y="39" width="414" height="764"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </activityIndicatorView>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="KBm-z9-JMe">
                                 <rect key="frame" x="0.0" y="0.0" width="414" height="44"/>
                                 <subviews>
@@ -156,6 +160,7 @@
                         <viewLayoutGuide key="safeArea" id="dxV-kg-TGD"/>
                     </view>
                     <connections>
+                        <outlet property="activityIndicator" destination="JGB-D9-gN3" id="2QI-lA-4fN"/>
                         <outlet property="cancelButton" destination="b4o-gh-DbD" id="Zy0-if-1R5"/>
                         <outlet property="collectionView" destination="Bsz-JW-LKs" id="2qj-EA-pXH"/>
                         <outlet property="uploadButton" destination="mvd-rO-uLd" id="LoW-iE-Izj"/>
