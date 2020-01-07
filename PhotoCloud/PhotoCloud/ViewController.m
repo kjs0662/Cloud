@@ -9,6 +9,7 @@
 #import "ViewController.h"
 #import "PhotoCell.h"
 #import "LibraryView.h"
+#import "PhotoModel.h"
 
 @interface ViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, LibraryViewDelegate>
 
@@ -25,7 +26,7 @@
     [super viewDidLoad];
     
     [self.collectionView registerNib:[UINib nibWithNibName:@"PhotoCell" bundle:nil] forCellWithReuseIdentifier:@"PhotoCell"];
-    
+    self.collectionView.allowsMultipleSelection = YES;
     [self loadData];
 }
 
@@ -54,11 +55,14 @@
         }
     }];
     [task resume];
-    
-    
 }
 
 - (IBAction)plusButtonSelected:(UIBarButtonItem *)sender {
+    UIStoryboard *sb = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    LibraryView *libraryView = [sb instantiateViewControllerWithIdentifier:@"LibraryView"];
+    libraryView.delegate = self;
+    libraryView.modalPresentationStyle = UIModalPresentationPopover;
+    [self.navigationController presentViewController:libraryView animated:YES completion:nil];
 }
 
 #pragma mark - UICollectionViewDelegate

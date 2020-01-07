@@ -9,6 +9,7 @@
 #import "LibraryView.h"
 #import <Photos/Photos.h>
 #import "PhotoCell.h"
+#import "PhotoModel.h"
 
 @interface LibraryView()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
 
@@ -62,13 +63,29 @@
     NSString *boundary = [self generateBoundaryString];
     NSString *contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@", boundary];
     [request setValue:contentType forHTTPHeaderField: @"Content-Type"];
-    NSData *httpBody = [self createBodyWithBoundary:boundary parameters:nil images:self.selectedPhotos];
+    
+    NSMutableArray *photoModelArray = [[NSMutableArray alloc] initWithCapacity:self.selectedPhotos.count];
+    for (PHAsset *asset in self.selectedPhotos) {
+        NSDictionary<NSString *, NSString *> *dic = @{
+            @"createdDate": [self dateToString:asset.creationDate],
+            @"uid": asset.localIdentifier
+        };
+        [photoModelArray addObject:dic];
+    }
+    NSError *error = nil;
+    NSData *data = [NSJSONSerialization dataWithJSONObject:photoModelArray options:kNilOptions error:&error];
+    if(error) {
+        NSLog(@"%@", error);
+    }
+    NSString *paramString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    NSDictionary *param = @{@"info":paramString};
+    
+    NSData *httpBody = [self createBodyWithBoundary:boundary parameters:param images:self.selectedPhotos];
     
     __weak LibraryView *weakSelf = self;
     NSURLSessionDataTask *task = [NSURLSession.sharedSession uploadTaskWithRequest:request fromData:httpBody completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         if (error) {
             NSLog(@"error = %@", error);
-            return;
         }
         NSString *result = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
         if ([result isEqualToString:@"success"]) {
@@ -82,16 +99,24 @@
     [task resume];
 }
 
+- (NSString *)dateToString:(NSDate *)date {
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyyMMddHHmmss"];
+    NSString *string = [formatter stringFromDate:date];
+    return string;
+}
+
 - (NSData *)createBodyWithBoundary:(NSString *)boundary
                         parameters:(NSDictionary *)parameters
                              images:(NSArray *)images {
+    
     NSMutableData *httpBody = [NSMutableData data];
 
     // add params (all params are strings)
-
     [parameters enumerateKeysAndObjectsUsingBlock:^(NSString *parameterKey, NSString *parameterValue, BOOL *stop) {
         [httpBody appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-        [httpBody appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"\r\n\r\n", parameterKey] dataUsingEncoding:NSUTF8StringEncoding]];
+        [httpBody appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"files\"; filename=\"%@\"\r\n", parameterKey] dataUsingEncoding:NSUTF8StringEncoding]];
+        [httpBody appendData:[@"Content-Type: application/json\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
         [httpBody appendData:[[NSString stringWithFormat:@"%@\r\n", parameterValue] dataUsingEncoding:NSUTF8StringEncoding]];
     }];
 
@@ -117,7 +142,6 @@
 - (NSString *)generateBoundaryString {
     return [NSString stringWithFormat:@"Boundary-%@", [[NSUUID UUID] UUIDString]];
 }
-
 
 #pragma mark - CollectionViewDelgate
 
