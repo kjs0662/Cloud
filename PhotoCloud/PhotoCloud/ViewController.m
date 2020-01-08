@@ -14,9 +14,12 @@
 @interface ViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, LibraryViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (weak, nonatomic) IBOutlet UICollectionViewFlowLayout *flowLayout;
 
-@property (nonatomic, strong) NSArray *photos;
+@property (nonatomic, strong) NSMutableArray *photos;
+@property (nonatomic, strong) NSMutableArray *selectedPhotos;
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *plusButton;
+@property (weak, nonatomic) IBOutlet UIBarButtonItem *deleteButton;
 
 @end
 
@@ -27,6 +30,9 @@
     
     [self.collectionView registerNib:[UINib nibWithNibName:@"PhotoCell" bundle:nil] forCellWithReuseIdentifier:@"PhotoCell"];
     self.collectionView.allowsMultipleSelection = YES;
+    [self.deleteButton setTintColor:UIColor.grayColor];
+    [self.deleteButton setEnabled:NO];
+    
     [self loadData];
 }
 
@@ -39,20 +45,25 @@
         if (!data || error) {
             return;
         }
-        NSLog(@"HTTP response results : %@", [[NSString alloc] initWithBytes:data.bytes length:data.length encoding:NSUTF8StringEncoding]);
         NSError *err = nil;
-        NSDictionary <NSString *, id> *json = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
+        NSArray *array = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
         if(err) {
             return;
         }
-        if (json[@"Images"]) {
-            if ([json[@"Images"] isKindOfClass:NSArray.class]) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    self.photos = json[@"Images"];
-                    [self.collectionView reloadData];
-                });
+        NSMutableArray *photos = [[NSMutableArray alloc] init];
+        if (array.count > 0) {
+            for (NSDictionary *dic in array) {
+                PhotoModel *model = [[PhotoModel alloc] init];
+                model.identifier = dic[@"Identifier"];
+                model.createdData = dic[@"CreatedDate"];
+                model.image = dic[@"Image"];
+                [photos addObject:model];
             }
         }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.photos = photos;
+            [self.collectionView reloadData];
+        });
     }];
     [task resume];
 }
@@ -63,6 +74,39 @@
     libraryView.delegate = self;
     libraryView.modalPresentationStyle = UIModalPresentationPopover;
     [self.navigationController presentViewController:libraryView animated:YES completion:nil];
+}
+
+- (IBAction)deleteButtonWasSelected:(UIBarButtonItem *)sender {
+    if (self.selectedPhotos.count > 0) {
+        NSURL *url = [NSURL URLWithString:@"http://localhost:9090/"];
+        NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10];
+        NSMutableArray *photoArray = [[NSMutableArray alloc] initWithCapacity:self.selectedPhotos.count];
+        for (PhotoModel *model in self.selectedPhotos) {
+            NSDictionary *dic = @{
+                @"Identifier": model.identifier,
+                @"CreatedDate": model.createdData
+            };
+            [photoArray addObject:dic];
+        }
+        NSData *data = [[NSJSONSerialization dataWithJSONObject:photoArray
+                                                        options:0
+                                                          error:nil] copy];
+        request.HTTPBody = data;
+        [request setHTTPMethod:@"DELETE"];
+        [request setValue:@"application/json; charset=utf-8" forHTTPHeaderField: @"Content-Type"];
+        NSURLSessionDataTask *task = [NSURLSession.sharedSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+            if (error) {
+                NSLog(@"error = %@", error);
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                for (NSIndexPath *indexPath in self.collectionView.indexPathsForSelectedItems) {
+                    [self.collectionView deselectItemAtIndexPath:indexPath animated:NO];
+                }
+                [self loadData];
+            });
+        }];
+        [task resume];
+    }
 }
 
 #pragma mark - UICollectionViewDelegate
@@ -77,9 +121,30 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     PhotoCell *cell = [self.collectionView dequeueReusableCellWithReuseIdentifier:@"PhotoCell" forIndexPath:indexPath];
-    UIImage *image = [[UIImage alloc] initWithContentsOfFile:self.photos[indexPath.item]];
+    PhotoModel *model = self.photos[indexPath.item];
+    UIImage *image = [[UIImage alloc] initWithContentsOfFile:model.image];
     cell.imageView.image = image;
     return cell;
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    if (!self.selectedPhotos) {
+        self.selectedPhotos = [[NSMutableArray alloc] init];
+    }
+    if (self.collectionView.indexPathsForSelectedItems.count > 0) {
+        [self.deleteButton setTintColor:UIColor.systemBlueColor];
+        [self.deleteButton setEnabled:YES];
+    }
+    [self.selectedPhotos addObject:self.photos[indexPath.item]];
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didDeselectItemAtIndexPath:(NSIndexPath *)indexPath {
+    if (self.collectionView.indexPathsForSelectedItems.count == 0) {
+        [self.deleteButton setTintColor:UIColor.grayColor];
+        [self.deleteButton setEnabled:NO];
+        self.selectedPhotos = nil;
+    }
+    [self.selectedPhotos removeObject:self.photos[indexPath.item]];
 }
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {

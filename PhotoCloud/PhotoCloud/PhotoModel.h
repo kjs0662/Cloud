@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface PhotoModel : NSObject
 
-@property (nonatomic, strong, nonnull) NSString *uid;
+@property (nonatomic, strong, nonnull) NSString *identifier;
 @property (nonatomic, strong, nullable) NSString *thumbnailImage;
 @property (nonatomic, strong, nonnull) NSString *image;
 @property (nonatomic, strong, nonnull) NSString *createdData;

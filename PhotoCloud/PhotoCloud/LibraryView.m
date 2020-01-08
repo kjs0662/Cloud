@@ -67,8 +67,8 @@
     NSMutableArray *photoModelArray = [[NSMutableArray alloc] initWithCapacity:self.selectedPhotos.count];
     for (PHAsset *asset in self.selectedPhotos) {
         NSDictionary<NSString *, NSString *> *dic = @{
-            @"createdDate": [self dateToString:asset.creationDate],
-            @"uid": asset.localIdentifier
+            @"CreatedDate": [self dateToString:asset.creationDate],
+            @"Identifier": asset.localIdentifier
         };
         [photoModelArray addObject:dic];
     }
@@ -78,8 +78,7 @@
         NSLog(@"%@", error);
     }
     NSString *paramString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-    NSDictionary *param = @{@"info":paramString};
-    
+    NSDictionary *param = @{@"Info":paramString};
     NSData *httpBody = [self createBodyWithBoundary:boundary parameters:param images:self.selectedPhotos];
     
     __weak LibraryView *weakSelf = self;
@@ -111,12 +110,10 @@
                              images:(NSArray *)images {
     
     NSMutableData *httpBody = [NSMutableData data];
-
     // add params (all params are strings)
     [parameters enumerateKeysAndObjectsUsingBlock:^(NSString *parameterKey, NSString *parameterValue, BOOL *stop) {
         [httpBody appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-        [httpBody appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"files\"; filename=\"%@\"\r\n", parameterKey] dataUsingEncoding:NSUTF8StringEncoding]];
-        [httpBody appendData:[@"Content-Type: application/json\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+        [httpBody appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"\r\n\r\n", parameterKey] dataUsingEncoding:NSUTF8StringEncoding]];
         [httpBody appendData:[[NSString stringWithFormat:@"%@\r\n", parameterValue] dataUsingEncoding:NSUTF8StringEncoding]];
     }];
 
