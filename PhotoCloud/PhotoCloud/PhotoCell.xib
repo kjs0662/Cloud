@@ -20,15 +20,16 @@
                         <rect key="frame" x="0.0" y="0.0" width="136" height="136"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     </imageView>
-                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="10e-Xr-vdu">
+                    <view contentMode="scaleToFill" id="10e-Xr-vdu">
                         <rect key="frame" x="0.0" y="0.0" width="136" height="136"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="checkmark.circle.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="Eis-m4-wy9">
                                 <rect key="frame" x="96" y="96.5" width="30" height="29"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="30" id="IsZ-U0-Nd2"/>
-                                    <constraint firstAttribute="width" constant="30" id="xd0-mg-DSh"/>
+                                    <constraint firstAttribute="width" constant="30" id="dEc-qB-uWG"/>
+                                    <constraint firstAttribute="height" constant="30" id="fMx-F5-eBN"/>
                                 </constraints>
                                 <userDefinedRuntimeAttributes>
                                     <userDefinedRuntimeAttribute type="number" keyPath="cornerRadius">
@@ -40,27 +41,17 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="0.29999999999999999" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstAttribute="bottom" secondItem="Eis-m4-wy9" secondAttribute="bottom" constant="10" id="1Uj-dP-VXQ"/>
-                            <constraint firstAttribute="trailing" secondItem="Eis-m4-wy9" secondAttribute="trailing" constant="10" id="VPp-xT-nxS"/>
+                            <constraint firstAttribute="bottom" secondItem="Eis-m4-wy9" secondAttribute="bottom" constant="10" id="MPR-rz-Vhs"/>
+                            <constraint firstAttribute="trailing" secondItem="Eis-m4-wy9" secondAttribute="trailing" constant="10" id="sKA-7P-kw2"/>
                         </constraints>
                     </view>
                 </subviews>
             </view>
-            <constraints>
-                <constraint firstItem="10e-Xr-vdu" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="6A6-oP-iQE"/>
-                <constraint firstItem="10e-Xr-vdu" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="CN2-vP-5A8"/>
-                <constraint firstItem="LQa-He-9DB" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="Dsn-AW-PBd"/>
-                <constraint firstItem="LQa-He-9DB" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="GSt-LD-86p"/>
-                <constraint firstAttribute="trailing" secondItem="LQa-He-9DB" secondAttribute="trailing" id="P1C-tk-1NO"/>
-                <constraint firstAttribute="bottom" secondItem="10e-Xr-vdu" secondAttribute="bottom" id="VpX-pJ-gNg"/>
-                <constraint firstAttribute="bottom" secondItem="LQa-He-9DB" secondAttribute="bottom" id="bmR-ue-jKn"/>
-                <constraint firstAttribute="trailing" secondItem="10e-Xr-vdu" secondAttribute="trailing" id="hnc-8W-pIs"/>
-            </constraints>
             <viewLayoutGuide key="safeArea" id="SEy-5g-ep8"/>
             <size key="customSize" width="121" height="108"/>
             <connections>
-                <outlet property="imageView" destination="LQa-He-9DB" id="2Q0-3U-6YR"/>
-                <outlet property="selectedView" destination="10e-Xr-vdu" id="Bio-45-a0Q"/>
+                <outlet property="imageView" destination="LQa-He-9DB" id="XOH-5H-drP"/>
+                <outlet property="selectedView" destination="10e-Xr-vdu" id="0KQ-Jo-1ph"/>
             </connections>
             <point key="canvasLocation" x="188.40579710144928" y="123.88392857142857"/>
         </collectionViewCell>

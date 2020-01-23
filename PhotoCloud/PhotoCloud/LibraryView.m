@@ -57,7 +57,7 @@
 
 - (IBAction)uploadButtonWasSelected:(UIButton *)sender {
     [self.activityIndicator startAnimating];
-    NSURL *url = [NSURL URLWithString:@"http://localhost:9090/"];
+    NSURL *url = [NSURL URLWithString:@"http://13.115.23.107:9090/"];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10];
     [request setHTTPMethod:@"POST"];
     NSString *boundary = [self generateBoundaryString];
@@ -177,7 +177,7 @@
 }
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    CGFloat targetSize = floorf(self.view.bounds.size.width)/3 - 2;
+    CGFloat targetSize = self.view.bounds.size.width/3 - 2;
     return CGSizeMake(targetSize, targetSize);
 }
 

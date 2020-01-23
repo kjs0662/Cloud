@@ -14,7 +14,6 @@
 @interface ViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, LibraryViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
-@property (weak, nonatomic) IBOutlet UICollectionViewFlowLayout *flowLayout;
 
 @property (nonatomic, strong) NSMutableArray *photos;
 @property (nonatomic, strong) NSMutableArray *selectedPhotos;
@@ -37,7 +36,7 @@
 }
 
 - (void)loadData {
-    NSURL *url = [NSURL URLWithString:@"http://localhost:9090/"];
+    NSURL *url = [NSURL URLWithString:@"http://13.115.23.107:9090/"];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10];
     [request setHTTPMethod:@"GET"];
     
@@ -57,6 +56,7 @@
                 model.identifier = dic[@"Identifier"];
                 model.createdData = dic[@"CreatedDate"];
                 model.image = dic[@"Image"];
+                model.name = dic[@"Name"];
                 [photos addObject:model];
             }
         }
@@ -78,13 +78,14 @@
 
 - (IBAction)deleteButtonWasSelected:(UIBarButtonItem *)sender {
     if (self.selectedPhotos.count > 0) {
-        NSURL *url = [NSURL URLWithString:@"http://localhost:9090/"];
+        NSURL *url = [NSURL URLWithString:@"http://13.115.23.107:9090/"];
         NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10];
         NSMutableArray *photoArray = [[NSMutableArray alloc] initWithCapacity:self.selectedPhotos.count];
         for (PhotoModel *model in self.selectedPhotos) {
             NSDictionary *dic = @{
                 @"Identifier": model.identifier,
-                @"CreatedDate": model.createdData
+                @"CreatedDate": model.createdData,
+                @"Name": model.name,
             };
             [photoArray addObject:dic];
         }
@@ -122,8 +123,16 @@
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     PhotoCell *cell = [self.collectionView dequeueReusableCellWithReuseIdentifier:@"PhotoCell" forIndexPath:indexPath];
     PhotoModel *model = self.photos[indexPath.item];
-    UIImage *image = [[UIImage alloc] initWithContentsOfFile:model.image];
-    cell.imageView.image = image;
+    NSURL *url = [[NSURL alloc] initWithString:model.image];
+    NSURLSessionTask *task = [[NSURLSession sharedSession] dataTaskWithURL:url completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if (data) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                UIImage *image = [UIImage imageWithData:data];
+                cell.imageView.image = image;
+            });
+        }
+    }];
+    [task resume];
     return cell;
 }
 

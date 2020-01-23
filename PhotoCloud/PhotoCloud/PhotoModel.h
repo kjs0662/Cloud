@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) NSString *thumbnailImage;
 @property (nonatomic, strong, nonnull) NSString *image;
 @property (nonatomic, strong, nonnull) NSString *createdData;
+@property (nonatomic, strong, nonnull) NSString *name;
 
 @end
 
