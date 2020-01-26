@@ -57,6 +57,7 @@
                 model.createdData = dic[@"CreatedDate"];
                 model.image = dic[@"Image"];
                 model.name = dic[@"Name"];
+                model.thumbnailImage = dic[@"Thumbnail"];
                 [photos addObject:model];
             }
         }
@@ -123,7 +124,7 @@
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     PhotoCell *cell = [self.collectionView dequeueReusableCellWithReuseIdentifier:@"PhotoCell" forIndexPath:indexPath];
     PhotoModel *model = self.photos[indexPath.item];
-    NSURL *url = [[NSURL alloc] initWithString:model.image];
+    NSURL *url = [[NSURL alloc] initWithString:model.thumbnailImage];
     NSURLSessionTask *task = [[NSURLSession sharedSession] dataTaskWithURL:url completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         if (data) {
             dispatch_async(dispatch_get_main_queue(), ^{

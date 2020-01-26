@@ -124,7 +124,7 @@
             NSData *imageData = UIImageJPEGRepresentation(result, 90);
 
             [httpBody appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-            [httpBody appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"files\"; filename=\"%@.png\"\r\n",str_image1] dataUsingEncoding:NSUTF8StringEncoding]];
+            [httpBody appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"files\"; filename=\"%@.jpg\"\r\n",str_image1] dataUsingEncoding:NSUTF8StringEncoding]];
             [httpBody appendData:[@"Content-Type: application/octet-stream\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
             [httpBody appendData:imageData];
             [httpBody appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
